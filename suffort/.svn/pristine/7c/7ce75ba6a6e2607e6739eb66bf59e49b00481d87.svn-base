@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.CompBoardDao">
+
+   <resultMap type="compBoardDto" id="CompBoardDtoTotalResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <result column="my_likes" property="myLikes"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="getAllCompBoards" resultMap="CompBoardDtoTotalResultMap" parameterType="map">
+      select distinct a.compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name,
+                <choose>
+				   <when test="userNo != null">
+					  (select count(*) from company_user_likes where compboard_no = a.compboard_no and user_no = #{userNo}) my_likes
+				   </when>
+				   <otherwise>
+				   	0 my_likes
+				   </otherwise>
+			   </choose>
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      join company_board_tags c on a.compboard_no = c.compboard_no
+      where company_actived ='Y'
+      and compboard_actived ='Y'
+	  <if test="tagNo != null">
+		and c.tag_no = #{tagNo}
+	  </if>
+
+      order by a.compboard_no desc
+      limit 7 offset #{offset}
+   </select>
+   <select id="getTagsByBoardNo" parameterType="long" resultType="TagDto">
+      select a.tag_no tagNo, 
+            a.tag_name tagName
+      from tags a
+      join company_board_tags b on a.tag_no = b.tag_no
+      where b.compboard_no = #{value}
+      order by a.tag_no asc
+   </select>
+   
+   
+   <select id="getAllCompBoardsCount" resultType="int" parameterType="map">
+		select distinct count(*)
+		from company_total_boards a 
+		join companies b on a.company_no = b.company_no
+		join company_board_tags c on a.compboard_no = c.compboard_no
+		<where>
+			<if test="tagNo != null">
+				c.tag_no = #{tagNo}
+			</if>
+			<if test="keyword != null">
+			and (a.compboard_title like concat('%' , #{keyword} , '%')
+			or a.compboard_no in (select X.compboard_no 
+     						from company_board_tags X, tags Y 
+     						where X.tag_no = Y.tag_no
+     						and Y.tag_name like concat('%' , #{keyword} , '%')))
+		    </if>
+		</where>
+	</select>
+   
+   
+   <resultMap type="compBoardDto" id="CompBoardDtoTagsResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="getCompBoardsByTag" resultMap="CompBoardDtoTagsResultMap" parameterType="long">
+      select a.compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      join company_board_tags c on a.compboard_no = c.compboard_no
+      where c.tag_no=#{value}
+      order by compboard_registered_date desc
+   </select>
+   
+   
+   
+   
+   
+   <!-- 메인에서 검색에 활용되는 쿼리 -->
+ 
+   <resultMap type="compBoardDto" id="SearchResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="searchCompBoards" parameterType="map" resultMap="SearchResultMap">
+      select distinct a.compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name
+               
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      join company_board_tags c on a.compboard_no = c.compboard_no
+      where company_actived ='Y'
+      and compboard_actived ='Y'
+		<if test="tagNo != null">
+		and c.tag_no = #{tagNo}
+		</if>
+			
+		<if test="keyword != null">
+		and (a.compboard_title like concat('%' , #{keyword} , '%')
+		or a.compboard_no in (select X.compboard_no 
+	   						from company_board_tags X, tags Y 
+	   						where X.tag_no = Y.tag_no
+	   						and Y.tag_name like concat('%' , #{keyword} , '%')))
+	    </if>
+		order by a.compboard_no desc
+		limit #{limit} offset #{offset}
+   </select>
+   
+   <resultMap type="compBoardDto" id="SearchMoreResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="searchMoreCompBoards" parameterType="map" resultMap="SearchMoreResultMap">
+      select distinct a.compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      join company_board_tags c on a.compboard_no = c.compboard_no
+	  <where>
+		  <if test="tagNo != null">
+		  	c.tag_no = #{tagNo}
+		  </if>
+		  <if test="keyword != null">
+			and (a.compboard_title like concat('%' , #{keyword} , '%')
+			or a.compboard_no in (select X.compboard_no 
+     						from company_board_tags X, tags Y 
+     						where X.tag_no = Y.tag_no
+     						and Y.tag_name like concat('%' , #{keyword} , '%')))
+		  </if>
+	  </where>
+      order by compboard_registered_date desc
+      limit #{limit} offset #{offset}
+   </select>
+   
+   
+   <resultMap type="compBoardDto" id="CompBoardDtoMyPageResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="getCompBoardsByNo" resultMap="CompBoardDtoMyPageResultMap" parameterType="long">
+      select compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      where b.company_no= #{value}
+      and compboard_actived ='Y'
+      order by compboard_registered_date desc
+   </select>
+   
+   
+   
+   
+   
+   
+   <resultMap type="categories" id="CategoriesTotalResultMap">
+      <id column="category_no" property="no"/>
+      <result column="category_name" property="name"/>
+      <collection property="catTags" ofType="com.sample.web.dto.TagDto" select="getTagsByCategoriesNo" column="category_no"/>
+   </resultMap>
+   <select id="getAllCategories" resultMap="CategoriesTotalResultMap">
+      select category_no, category_name
+      from categories
+   </select>
+   <select id="getTagsByCategoriesNo" parameterType="long" resultType="TagDto">
+      select a.tag_no tagNo, 
+            a.tag_name tagName
+      from tags a
+      join categories b on a.category_no = b.category_no
+      where b.category_no = #{value}
+      order by a.tag_no asc
+   </select>
+   
+   
+   <resultMap type="compBoardDto" id="CompBoardDtoDetailResultMap">
+      <id column="compboard_no" property="compBoardNo"/>
+      <result column="compboard_title" property="compBoardTitle"/>
+      <result column="compboard_content" property="compBoardContent"/>
+      <result column="compboard_warnings" property="compBoardWarnings"/>
+      <result column="compboard_user_likes" property="compBoardUserLikes"/>
+      <result column="compboard_registered_date" property="compBoardRegisteredDate"/>
+      <result column="company_no" property="companyNo"/>
+      <result column="company_id" property="companyId"/>
+      <result column="company_logo" property="companyLogo"/>
+      <result column="company_name" property="companyName"/>
+      <result column="company_content" property="companyContent"/>
+      <result column="company_address" property="companyAddress"/>
+      <result column="company_income" property="companyIncome"/>
+      <result column="company_size" property="companySize"/>
+      <result column="company_started_date" property="companyStartedDate"/>
+      <result column="company_url" property="companyUrl"/>
+      <collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="compboard_no"/>
+   </resultMap>
+   <select id="getCompBoardDetail" parameterType="long" resultMap="CompBoardDtoDetailResultMap">
+      select compboard_no,
+               compboard_title,
+               compboard_content,
+               compboard_warnings,
+               compboard_user_likes,
+               compboard_registered_date,
+               b.company_no,
+               b.company_id,
+               b.company_logo,
+               company_name,
+               company_content,
+               company_address,
+               company_income,
+               company_size,
+               company_started_date,
+               company_url
+      from company_total_boards a
+      join companies b on a.company_no = b.company_no
+      and compboard_actived ='Y'
+      where compboard_no = #{value}
+   </select>
+   
+   
+   
+   <insert id="insertCompBoard" parameterType="CompBoard" 
+      useGeneratedKeys="true" keyProperty="no">
+      insert into company_total_boards
+      (compboard_title, compboard_content, company_no)
+      values
+      (#{title},#{content},#{companiesNo})
+      
+   </insert>
+   
+   <insert id="insertCompBoardTags" parameterType="TagDto">
+      insert into company_board_tags
+      (compboard_no, tag_no)
+      values
+      (#{compBoardNo},#{tagNo})
+   </insert>
+   
+   	<update id="increaseCompUserLikes" parameterType="long">
+		update company_total_boards
+		set 
+			compboard_user_likes = compboard_user_likes+1
+		WHERE	
+			compboard_no = #{value}
+	</update>
+   
+   	<update id="decreaseCompUserLikes" parameterType="long">
+		update company_total_boards
+		set 
+			compboard_user_likes = compboard_user_likes-1
+		WHERE	
+			compboard_no = #{value}
+	</update>
+
+
+	<update id="updateCompBoard" parameterType="CompBoard">
+   		UPDATE company_total_boards
+			set 
+				compboard_title= #{title},
+				compboard_content=#{content}
+			WHERE
+				compboard_no=#{no}
+   	</update>
+   	<delete id="deleteCompBoardTags"  parameterType="CompBoard">
+   		delete from company_board_tags where compboard_no= #{no}
+   	</delete>
+   	<update id="deleteCompBoard" parameterType="long">
+		update company_total_boards
+		SET
+			compboard_actived = 'N'
+		WHERE
+			compboard_no = #{value}
+	</update>
+   
+   
+</mapper>

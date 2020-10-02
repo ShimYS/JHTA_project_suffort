@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.LikeDao">
+	<select id="getUserLikes" resultType="UserUserLikes" parameterType="UserUserLikes">
+		select userlike_no		as userlikeNo, 
+			   userboard_no		as userBoardNo, 
+			   user_no			as userNo
+		from user_user_likes
+		where userboard_no= #{userBoardNo}
+		and user_no = #{userNo}
+	</select>
+
+	<insert id="insertLikes" parameterType="UserUserLikes">
+		insert into user_user_likes
+		(userboard_no, user_no)
+		VALUES
+		(#{userBoardNo},#{userNo})
+	</insert>
+	
+	<delete id="deleteLikes" parameterType="UserUserLikes">
+		delete from user_user_likes
+		where userboard_no = #{userBoardNo}
+		and user_no = #{userNo}
+	</delete>
+	
+	<select id="getCompLikes" resultType="UserCompLikes" parameterType="UserCompLikes">
+		select complike_no		as complikeNo, 
+			   userboard_no		as userBoardNo, 
+			   company_no		as companyNo
+		from user_comp_likes
+		where userboard_no= #{userBoardNo}
+		and company_no = #{companyNo}
+	</select>
+
+	<insert id="insertCompLikes" parameterType="UserCompLikes">
+		insert into user_comp_likes
+		(userboard_no, company_no)
+		VALUES
+		(#{userBoardNo},#{companyNo})
+	</insert>
+	
+	<delete id="deleteCompLikes" parameterType="UserCompLikes">
+		delete from user_comp_likes
+		where userboard_no = #{userBoardNo}
+		and company_no = #{companyNo}
+	</delete>
+
+	<select id="getCompUserLikes" parameterType="CompanyUserLikes" resultType="CompanyUserLikes">
+		select com_userlikes_no		as compUserlikesNo, 
+			   compboard_no			as compBoardNo, 
+			   user_no			as userNo
+		from company_user_likes
+		where compboard_no= #{compBoardNo}
+		and user_no = #{userNo}
+	</select>
+	
+	<insert id="insertCompUserLikes" parameterType="CompanyUserLikes">
+		insert into company_user_likes
+		(compboard_no, user_no)
+		VALUES
+		(#{compBoardNo},#{userNo})
+	</insert>
+	
+	<delete id="deleteCompUserLikes" parameterType="CompanyUserLikes">
+		delete from company_user_likes
+		where compboard_no = #{compBoardNo}
+		and user_no = #{userNo}
+	</delete>
+</mapper>

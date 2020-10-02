@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.ManagerDao">
+	<!-- 유저 전체게시물 가져오기 -->
+	<select id="selectUserBoards" resultType="UserBoardDto">
+		select
+			a.userboard_no											as userBoardNo,
+			b.user_id												as userId,
+			a.userboard_title										as userBoardTitle,
+			a.userboard_warnings									as userBoardWarnings,
+			sum(a.userboard_user_likes + a.userboard_comp_likes)	as userBoardLikes,
+			a.userboard_registered_date								as userBoardRegisteredDate,
+			a.userboard_actived										as userBoardActived
+		from user_total_boards a
+		join users b on a.user_no = b.user_no
+		group by a.userboard_no
+		order by a.userboard_no desc
+	</select>
+
+	<select id="selectUserBoard" resultType="UserBoard" parameterType="long">
+		select 
+			userboard_no			as userBoardNo,
+			userboard_title			as userBoardTitle,
+			userboard_actived		as userBoardActived,
+			user_no					as userNo
+		from 
+			user_total_boards
+		where 
+			userboard_no = #{value}
+	</select>
+	
+	<!-- 유저게시물 활동 변경 -->
+	<update id="updateUserBoardActive" parameterType="UserBoard">
+		update 
+			user_total_boards
+		set 
+			userboard_actived = #{userBoardActived}
+		where 
+			userboard_no = #{userBoardNo}
+	</update>
+	
+	<!-- 기업 전체게시물 가져오기 -->
+	<select id="selectCompBoards" resultType="CompBoardDto">
+		select
+			a.compboard_no				as compBoardNo,
+			b.company_id				as companyId,
+			a.compboard_title			as compBoardTitle,
+			a.compboard_warnings		as compBoardWarnings,
+			a.compboard_user_likes		as compBoardUserLikes,
+			a.compboard_actived			as compBoardActived,
+			a.compboard_registered_date	as compBoardRegisteredDate
+		from company_total_boards a
+		join companies b on a.company_no = b.company_no
+		group by a.compboard_no
+		order by a.compboard_no desc
+	</select>
+
+	<select id="selectCompBoard" resultType="CompBoard" parameterType="long">
+		select 
+			compboard_no			as no,
+			compboard_title			as title,
+			compboard_actived		as actived,
+			company_no				as companiesNo
+		from 
+			company_total_boards
+		where 
+			compboard_no = #{value}
+	</select>
+	
+	<!-- 기업게시물 활동 변경 -->
+	<update id="updateCompBoardActive" parameterType="CompBoard">
+		update 
+			company_total_boards
+		set 
+			compboard_actived = #{actived}
+		where 
+			compboard_no = #{no}
+	</update>
+
+	<!-- 게시물 태그 가져오기-->
+	<select id="selectTags" resultType="Tags">
+		select distinct 
+			a.tag_no	as no,
+			a.tag_name	as name
+		from tags a
+		left outer join user_board_tags b on a.tag_no = b.tag_no
+		left outer join company_board_tags c on a.tag_no = c.tag_no
+		where compboard_no is not null or userboard_no is not null
+		order by a.tag_no asc 
+	</select>
+
+	<!-- 태그 목록 가져오기 -->
+	<select id="selectAllTags" resultType="Tags">
+		select 
+			tag_no			as no,
+			tag_name		as name,
+			category_no		as categoriesNo
+		from tags
+	</select>
+
+	<!-- 태그 추가하기 -->
+	<insert id="insertTag" parameterType="Tags">
+		insert into tags
+			(tag_name, category_no)
+		values 
+			(#{name}, #{categoriesNo})
+	</insert>
+	
+	
+	<!-- 카테고리 목록 가져오기 -->
+	<select id="getAllCategories" resultType="Categories">
+		select category_no 		as no, 
+			   category_name 	as name
+		from categories
+	</select>
+	
+	<!-- 카테고리번호에 따른 태그들 가져고익 -->
+	<select id="getTagsByCategoryNo" parameterType="long" resultType="Tags">
+		select tag_no			as no, 
+		tag_name				as name, 
+		category_no				as categoriesNo
+		from tags 
+		where category_no=#{value}
+		order by tag_no asc
+	</select>
+	
+	
+	<!-- 유저리스트 가져오기 -->
+	<select id="selectUsers" resultType="UserDto">
+		select
+			nvl(a.user_img, ' ')	 										as img,
+			a.user_no														as no,
+			a.user_id														as id,
+			a.user_name														as name,
+			a.user_birth													as birth,
+			nvl(a.user_git_addr, ' ')										as gitAddr,
+			nvl(a.user_email, ' ')											as email,
+			count(b.userboard_no) 											as boardCnt,
+			nvl(sum(b.userboard_user_likes + b.userboard_comp_likes), 0)	as sumLike,
+			nvl(sum(b.userboard_warnings), 0)								as sumWarning,
+			a.user_registered_date											as registeredDate,
+			a.user_actived													as actived
+		from users a
+		left outer join user_total_boards b on a.user_no = b.user_no
+		group by a.user_no
+		order by a.user_no desc 
+	</select>
+	
+	<!-- 유저리스트 정지 -->
+	<select id="selectUser" parameterType="long" resultType="Users">
+		select 
+			user_img												as img,
+			user_no													as no,
+			user_id													as id,
+			user_name												as name,
+			user_registered_date									as registeredDate,
+			user_actived											as actived
+		from 
+			users
+		where 
+			user_no = #{value}
+	</select>
+	
+	<!-- 유저 활동 변경 -->
+	<update id="updateUserActive" parameterType="Users">
+		update
+			users
+		set 
+			user_actived = #{actived}
+		where 
+			user_no = #{no}
+	</update>
+	
+	<!-- 유저 통계 -->
+	<select id="selectUserChart" resultType="UserDto">
+		select 
+			b.day							as day, 
+			ifnull(count(a.user_name), 0)	as regiCnt
+		from users a
+		right outer join (
+						select Date(cal.date) day
+						from (
+							select subdate(now(), interval 30 day) + interval xc day as date
+							from (
+								select @xi:=@xi+1 as xc from 
+								(select 1 union select 2 union select 3 union select 4) xc1,
+								(select 1 union select 2 union select 3 union select 4) xc2,
+								(select 1 union select 2 union select 3 union select 4) xc3,
+								(select 1 union select 2 union select 3 union select 4) xc4,
+								(select @xi:=-1) xc0
+								) xxc1
+							) cal
+						where now() >= cal.date 
+						order by cal.date desc) b 
+		on a.user_registered_date = b.day
+		group by b.day
+		order by b.day asc
+	</select>
+		
+	<!-- 기업리스트 가져오기 -->
+	<select id="selectCompanies" resultType="CompanyDto">
+		select
+			nvl(a.company_logo, '')				as logo,
+			a.company_no						as no,
+			a.company_id						as id,
+			a.company_name						as name,
+			nvl(a.company_address, ' ')			as address,
+			nvl(a.company_url, ' ')				as url,
+			a.company_started_date				as startedDate,
+			nvl(a.company_income, ' ')			as income,
+			nvl(sum(b.compboard_warnings), 0)	as sumWarning,
+			nvl(sum(b.compboard_user_likes), 0)	as sumUserLike,
+			count(b.compboard_no)				as boardCnt,
+			a.company_registered_date			as registeredDate,
+			a.company_actived					as actived
+		from companies a
+		left outer join company_total_boards b on a.company_no = b.company_no
+		group by a.company_no
+		order by a.company_no desc			
+	</select>
+	
+	<!-- 기업리스트 정지 -->
+	<select id="selectCompany" parameterType="long" resultType="Companies">
+		select 
+			company_logo											as logo,
+			company_no												as no,
+			company_id												as id,
+			company_name											as name,
+			company_registered_date									as registeredDate,
+			company_actived											as actived
+		from 
+			companies
+		where 
+			company_no = #{value}
+	</select>
+	
+	<!-- 기업 활동 변경 -->
+	<update id="updateCompActive" parameterType="Companies">
+		update
+			companies
+		set 
+			company_actived = #{actived}
+		where 
+			company_no = #{no}
+	</update>
+	
+	<!-- 기업 통계 -->
+	<select id="selectCompChart" resultType="CompanyDto">
+		select 
+			b.day								as day, 
+			ifnull(count(a.company_name), 0)	as regiCnt
+		from companies a
+		right OUTER join (
+						select Date(cal.date) day
+						from (
+							select subdate(now(), interval 30 day) + interval xc day as date
+							from (
+								select @xi:=@xi+1 as xc from 
+								(select 1 union select 2 union select 3 union select 4) xc1,
+								(select 1 union select 2 union select 3 union select 4) xc2,
+								(select 1 union select 2 union select 3 union select 4) xc3,
+								(select 1 union select 2 union select 3 union select 4) xc4,
+								(select @xi:=-1) xc0
+								) xxc1
+							) cal
+						where now() >= cal.date
+						order by cal.date desc) b 
+		on a.company_registered_date = b.day
+		group by b.day
+		order by b.day asc
+	</select>
+	
+	<!-- 커뮤니티 리스트 가져오기 -->
+	<select id="selectCommunities" resultType="CommunityDto">
+		select 
+			a.commu_no					as commuNo, 
+			a.commu_title				as commuTitle, 
+			b.user_id					as userId, 
+			c.guest_grade				as guestGrade,
+			a.commu_range				as commuRange,
+			a.commu_password			as password,
+			a.commu_registered_date		as commuRigisteredDate,
+			c.guest_actived_date		as guestActivedDate,
+			a.commu_actived				as commuActived
+		from communities a
+		join users b on a.user_no = b.user_no
+		join community_guests c on a.commu_no = c.commu_no
+		where guest_grade = '방장'
+	</select>
+	
+	<!-- 커뮤니티 -->
+	<select id="selectCommunity" resultType="Communities" parameterType="long">
+		select 
+			commu_no				as no, 
+			commu_img				as img, 
+			commu_title				as title, 
+			user_no					as userNo, 
+			commu_registered_date	as rigisteredDate, 
+			commu_actived			as commuActived
+		from 
+			communities
+		where 
+			commu_no = #{value};
+	</select>
+	
+	<!-- 커뮤니티 활동 변경 -->
+	<update id="updateCommunityActive" parameterType="Communities">
+		update
+			communities
+		set 
+			commu_actived = #{actived}
+		where 
+			commu_no = #{no}
+	</update>
+</mapper>
+
+

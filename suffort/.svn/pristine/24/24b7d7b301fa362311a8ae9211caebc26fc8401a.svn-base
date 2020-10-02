@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL"/>
+	</settings>
+	
+	<typeAliases>
+		<typeAlias type="com.sample.web.vo.Companies" alias="Companies"/>
+		<typeAlias type="com.sample.web.vo.Communities" alias="Communities"/>
+		<typeAlias type="com.sample.web.vo.UserBoard" alias="UserBoard"/>
+		<typeAlias type="com.sample.web.vo.Users" alias="Users"/>
+		<typeAlias type="com.sample.web.form.UsersForm" alias="UsersForm"/>
+		<typeAlias type="com.sample.web.form.CompaniesForm" alias="CompaniesForm"/>
+		<typeAlias type="com.sample.web.dto.UserBoardDto" alias="UserBoardDto"/>
+		<typeAlias type="com.sample.web.vo.CompBoard" alias="CompBoard"/>
+		<typeAlias type="com.sample.web.vo.Categories" alias="Categories"/>
+		<typeAlias type="com.sample.web.dto.CompBoardDto" alias="CompBoardDto"/>
+		<typeAlias type="com.sample.web.dto.TagDto" alias="TagDto"/>
+		<typeAlias type="com.sample.web.vo.CommunityGuests" alias="CommunityGuests"/>
+		<typeAlias type="com.sample.web.vo.CommunityContents" alias="CommunityContents"/>
+		<typeAlias type="com.sample.web.dto.CommunityGuestDetail" alias="CommunityGuestDetail"/>
+		<typeAlias type="com.sample.web.dto.CommunitiesDetail" alias="CommunitiesDetail"/>
+		<typeAlias type="com.sample.web.vo.CommunityWritings" alias="CommunityWritings"/>
+		<typeAlias type="com.sample.web.vo.CommunityImgs" alias="CommunityImgs"/>
+		<typeAlias type="com.sample.web.vo.CommunityFiles" alias="CommunityFiles"/>
+		<typeAlias type="com.sample.web.dto.CompanyDto" alias="CompanyDto"/>
+		<typeAlias type="com.sample.web.dto.UserDto" alias="UserDto"/>
+		<typeAlias type="com.sample.web.dto.CommunityContentDetail" alias="CommunityContentDetail"/>
+		<typeAlias type="com.sample.web.vo.Tags" alias="Tags"/>
+		<typeAlias type="com.sample.web.dto.CommunityDto" alias="CommunityDto"/>
+		<typeAlias type="com.sample.web.dto.CommunityTagsDto" alias="CommunityTagsDto"/>
+		<typeAlias type="com.sample.web.dto.CommunityTagsDto2" alias="CommunityTagsDto2"/>
+		<typeAlias type="com.sample.web.vo.CommunityTags" alias="CommunityTags"/>
+		<typeAlias type="com.sample.web.vo.UserUserLikes" alias="UserUserLikes"/>
+		<typeAlias type="com.sample.web.vo.UserCompLikes" alias="UserCompLikes"/>
+		<typeAlias type="com.sample.web.vo.CompanyUserLikes" alias="CompanyUserLikes"/>
+		<typeAlias type="com.sample.web.dto.LikeDto" alias="LikeDto"/>
+		<typeAlias type="com.sample.web.vo.Careers" alias="Careers"/>
+		<typeAlias type="com.sample.web.vo.Licenses" alias="Licenses"/>
+		<typeAlias type="com.sample.web.dto.CommunityCntDto" alias="CommunityCntDto"/>
+		<typeAlias type="com.sample.web.dto.CommunityImgDto" alias="CommunityImgDto"/>
+		<typeAlias type="com.sample.web.dto.CommunityFileDto" alias="CommunityFileDto"/>
+		<typeAlias type="com.sample.web.form.CompaniesUpdateForm" alias="CompaniesUpdateForm"/>		
+	</typeAliases> 
+	
+	
+	
+	
+	<mappers>
+		<mapper resource="META-INF/mybatis/mappers/companies.xml" />
+		<mapper resource="META-INF/mybatis/mappers/communities.xml" />
+		<mapper resource="META-INF/mybatis/mappers/userBoards.xml" />
+		<mapper resource="META-INF/mybatis/mappers/compBoards.xml" />
+		<mapper resource="META-INF/mybatis/mappers/users.xml" />
+		<mapper resource="META-INF/mybatis/mappers/manager.xml" />
+		<mapper resource="META-INF/mybatis/mappers/categories.xml" /> 
+		<mapper resource="META-INF/mybatis/mappers/likes.xml" /> 
+		<mapper resource="META-INF/mybatis/mappers/careers.xml" />
+		<mapper resource="META-INF/mybatis/mappers/licenses.xml" />
+	</mappers>
+	
+</configuration>

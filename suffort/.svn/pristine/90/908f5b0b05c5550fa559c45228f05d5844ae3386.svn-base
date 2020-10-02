@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.CompanyDao">
+
+<!-- 
+	<insert id="insertCompanies" parameterType="CompaniesForm">
+		INSERT INTO companies 
+			(company_id, company_password, company_name, company_content, company_url, company_size, company_address)
+		VALUES
+			(#{id}, #{password}, #{name}, #{content}, #{url}, #{size}, #{address})
+	</insert>
+-->	
+	<insert id="insertCompanies" parameterType="CompaniesForm">
+		INSERT INTO companies 
+			(company_id, company_password, company_name, company_content, company_url, company_size, company_address)
+		VALUES
+			(#{compId}, #{compPassword}, #{compName}, #{compContent}, #{compUrl}, #{compSize}, #{compAddress})
+	</insert>
+	
+	<select id="selectCompanies" resultType="Companies">
+		SELECT 
+			company_no				AS no,
+			company_id				AS id,
+			company_password		AS password,
+			company_name			AS name,
+			company_content			AS content,
+			company_actived			AS actived,
+			company_registered_date	AS registeredDate,
+			company_logo			AS logo,
+			company_url				AS url,
+			company_size			AS size,
+			company_address			AS address,
+			company_income			AS income,
+			company_started_date	AS startedDate
+		FROM 
+			companies
+	</select>
+	
+	<select id="selectCompany" parameterType="string" resultType="Companies">
+		SELECT 
+			company_no				AS no,
+			company_id				AS id,
+			company_password		AS password,
+			company_name			AS name,
+			company_content			AS content,
+			company_actived			AS actived,
+			company_registered_date	AS registeredDate,
+			company_logo			AS logo,
+			company_url				AS url,
+			company_size			AS size,
+			company_address			AS address,
+			company_income			AS income,
+			company_started_date	AS startedDate
+		FROM 
+			companies
+		WHERE
+			company_id = #{value}
+	</select>
+	
+	<update id="updateCompany" parameterType="CompaniesUpdateForm">
+		UPDATE
+			companies
+		SET 
+			company_name = #{name},
+			company_content = #{content},
+			company_logo = #{logo},
+			company_url = #{url},
+			company_size = #{size},
+			company_address = #{address},
+			company_started_date = #{startedDate},
+			company_income = #{income}
+		WHERE
+			company_no = #{no}
+	</update>
+</mapper>

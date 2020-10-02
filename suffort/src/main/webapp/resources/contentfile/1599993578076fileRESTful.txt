@@ -1,0 +1,2 @@
+RESTful => 'REST한', 'REST하다'
+Representational State Transfer ful(사람이 인지하기 쉽게 표현한)

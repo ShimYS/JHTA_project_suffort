@@ -1,0 +1,102 @@
+﻿user.properties
+	user.getCountQuestionUserByNo = select b.user_no, nvl(a.count_question,0) \
+	from (select question_writer ,count(question_writer) as count_question \
+		from questions \
+		group by question_writer) a, users b \
+	where a.question_writer(+)=b.user_no \
+	and b.user_no = ? 
+
+UserDto
+	private int questionWriter
+	private int questionCount
+추가하기
+
+UserDao
+	public UserDto getCountQuestionUserByNo(int userNo) throws SQLException {
+		UserDto userDto = null;
+		Connection connection = ConnectionUtil.getConnection();
+		PreparedStatement pstmt = connection.prepareStatement(QueryUtil.getSQL("user.getCountQuestionUserByNo"));
+		pstmt.setInt(1, userNo);
+		ResultSet rs = pstmt.executeQuery();
+		
+		while (rs.next()) {
+			UserDto userDto = new UserDto();
+		
+			userDto.setNo(rs.getInt("user_no"));
+			userDto.setUserTotalPrice(rs.getInt("count_question"));
+			
+		}
+		
+		rs.close();
+		pstmt.close();
+		connection.close();
+		
+		return userDto;
+}
+
+questionform.jsp
+총 @건
+	<%=userDto.getQuestionCount%>
+
+
+
+user.properties(?) questions 테이블에 branch_no 추가하기
+	user.getquestionByNo = select a.user_id, a.user_tel, a.user_email, b.question_type, b.question_title, b.question_content, c.branch_addr_first, c.branch_name
+from users a, questions b, branches c
+where a.user_no (+)= b.question_writer
+and b.branch_no (+)= c.branch_no
+and c.branch_addr_first like '%'?'%'
+and a.user_no= ?
+
+UserDto
+	private String questionType;
+	private String questionTitle;
+	private String question_content;
+	private String branchAddr;
+	private String branchName;
+추가하기
+
+UserDao
+	public UserDto getquestionByNo(int userNo) throws SQLException {
+		UserDto userDto = null;
+		Connection connection = ConnectionUtil.getConnection();
+		PreparedStatement pstmt = connection.prepareStatement(QueryUtil.getSQL("user.getquestionByNo"));
+		pstmt.setInt(1, userNo);
+		ResultSet rs = pstmt.executeQuery();
+		
+		while (rs.next()) {
+			UserDto userDto = new UserDto();
+			
+			userDto.setNo(rs.getInt("user_no"));
+			userDto.setUserTotalPrice(rs.getInt("count_question"));
+			
+		}
+		
+		rs.close();
+		pstmt.close();
+		connection.close();
+		
+		return userDto;
+	}
+
+function refreshBranches(event) {
+		
+		var combobox = document.querySelector("#branch-combobox");
+		
+		//alert(event.target.value);
+		var comboboxValue = event.target.value;
+		
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var branches = JSON.parse(xhr.responseText);
+				var options = "";
+				for (var i=0; i<branches.length; i++) {
+					var branch = branches[i]
+					options += '<option value="'+branch.no+'"> '+branch.name+'</option>';
+				}
+				combobox.innerHTML = options;
+			}
+		}
+		xhr.open("get", "json/branches.jsp?addr=" + comboboxValue);
+		xhr.send();

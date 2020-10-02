@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.UserBoardDao">
+
+	<resultMap type="userBoardDto" id="UserBoardDtoTotalResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_access" property="userBoardAccess"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<result column="my_likes" property="myLikes"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+	<select id="getAllUserBoards" resultMap="UserBoardDtoTotalResultMap" parameterType="map">
+
+		select distinct a.userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_access,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id,
+			   <choose>
+				   <when test="userNo != null">
+					  (select count(*) from user_user_likes where userboard_no = a.userboard_no and user_no = #{userNo}) my_likes
+				   </when>
+				   <when test="companyNo != null">
+				   	  (select count(*) from user_comp_likes where userboard_no = a.userboard_no and company_no = #{companyNo}) my_likes
+				   </when>
+				   <otherwise>
+				   	0 my_likes
+				   </otherwise>
+			   </choose>
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		join user_board_tags c on a.userboard_no = c.userboard_no
+		where a.userboard_actived = 'Y'
+		and user_deleted ='N'
+		and user_actived = 'Y'
+		<if test="tagNo != null">
+			and c.tag_no = #{tagNo}
+		</if>
+		<choose>
+			<when test="access">
+				and a.userboard_access in ('전체공개', '회원공개','전체')
+			</when>
+			<otherwise>
+				and a.userboard_access in ('전체공개','전체')				
+			</otherwise>
+		</choose>
+		order by a.userboard_no desc
+		limit 7 offset #{offset}
+	</select>
+
+	<select id="getTagsByBoardNo" parameterType="long" resultType="TagDto">
+		select a.tag_no tagNo, 
+			   a.tag_name tagName
+		from tags a
+		join user_board_tags b on a.tag_no = b.tag_no
+		where b.userboard_no = #{value}
+		order by a.tag_no asc
+	</select>
+	
+
+	<select id="getAllUserBoardsCount" resultType="int" parameterType="map">
+		select count(distinct a.userboard_no)
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		join user_board_tags c on a.userboard_no = c.userboard_no
+		where a.userboard_actived = 'Y'
+		<if test="tagNo != null">
+			and c.tag_no = #{tagNo}
+		</if>
+		<!-- 에러시 이부분 날리기 2 -->
+		<if test="keyword != null">
+			and (a.userboard_title like concat('%' , #{keyword} , '%')
+			or a.userboard_no in (select X.userboard_no 
+     						from user_board_tags X, tags Y 
+     						where X.tag_no = Y.tag_no
+     						and Y.tag_name like concat('%' , #{keyword} , '%')))
+		</if>
+
+		<choose>
+			<when test="access">
+				and a.userboard_access in ('전체공개', '회원공개','전체')
+			</when>
+			<otherwise>
+				and a.userboard_access in ('전체공개','전체')				
+			</otherwise>
+		</choose>
+		
+	</select>
+	
+
+	<!-- 메인에서 검색시 보여줄 searchUserBoard -->
+
+	<resultMap type="userBoardDto" id="SearchBoardResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+	<select id="searchUserBoards" parameterType="map" resultMap="SearchBoardResultMap">
+
+		select distinct a.userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_access,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id,
+			   <choose>
+				   <when test="userNo != null">
+					  (select count(*) from user_user_likes where userboard_no = a.userboard_no and user_no = #{userNo}) my_likes
+				   </when>
+				   <when test="companyNo != null">
+				   	  (select count(*) from user_comp_likes where userboard_no = a.userboard_no and company_no = #{companyNo}) my_likes
+				   </when>
+				   <otherwise>
+				   	0 my_likes
+				   </otherwise>
+			   </choose>
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		join user_board_tags c on a.userboard_no = c.userboard_no
+		where a.userboard_actived = 'Y'
+		<if test="tagNo != null">
+			and c.tag_no = #{tagNo}
+		</if>
+		<if test="keyword != null">
+		and	(a.userboard_title like concat('%' , #{keyword} , '%')
+			or a.userboard_no in (select X.userboard_no 
+     						from user_board_tags X, tags Y 
+     						where X.tag_no = Y.tag_no
+     						and Y.tag_name like concat('%' , #{keyword} , '%')))
+		</if>
+		<choose>
+			<when test="access">
+				and a.userboard_access in ('전체공개', '회원공개','전체')
+			</when>
+			<otherwise>
+				and a.userboard_access in ('전체공개','전체')				
+			</otherwise>
+		</choose>
+		order by a.userboard_no desc
+		limit #{limit} offset #{offset}
+
+	</select>
+	
+	<!-- 메인 검색 후 더보기 -->
+	<resultMap type="userBoardDto" id="SearchMoreBoardResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+	<select id="searchUserMoreBoards" parameterType="map" resultMap="SearchMoreBoardResultMap">
+
+		select distinct a.userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_access,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id,
+			   <choose>
+				   <when test="userNo != null">
+					  (select count(*) from user_user_likes where userboard_no = a.userboard_no and user_no = #{userNo}) my_likes
+				   </when>
+				   <when test="companyNo != null">
+				   	  (select count(*) from user_comp_likes where userboard_no = a.userboard_no and company_no = #{companyNo}) my_likes
+				   </when>
+				   <otherwise>
+				   	0 my_likes
+				   </otherwise>
+			   </choose>
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		join user_board_tags c on a.userboard_no = c.userboard_no
+		where a.userboard_actived = 'Y'
+		<if test="tagNo != null">
+			and c.tag_no = #{tagNo}
+		</if>
+		<if test="keyword != null">
+		and	(a.userboard_title like concat('%' , #{keyword} , '%')
+			or a.userboard_no in (select X.userboard_no 
+     						from user_board_tags X, tags Y 
+     						where X.tag_no = Y.tag_no
+     						and Y.tag_name like concat('%' , #{keyword} , '%')))
+		</if>
+		<choose>
+			<when test="access">
+				and a.userboard_access in ('전체공개', '회원공개','전체')
+			</when>
+			<otherwise>
+				and a.userboard_access in ('전체공개','전체')				
+			</otherwise>
+		</choose>
+		order by a.userboard_no desc
+		limit #{limit} offset #{offset}
+
+	</select>
+		
+		
+	<resultMap type="userBoardDto" id="UserBoardDtoMyPageResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+
+	<select id="getUserBoardsByNo" resultMap="UserBoardDtoMyPageResultMap" parameterType="long">
+		select userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		where b.user_no = #{value}
+		and userboard_actived = 'Y'
+		order by userboard_registered_date desc
+	</select>
+		
+	<resultMap type="userBoardDto" id="UserBoardDtoTagsResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+
+	<select id="getUserBoardsByTag" resultMap="UserBoardDtoTagsResultMap" parameterType="long">
+
+		select a.userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id
+
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		join user_board_tags c on a.userboard_no = c.userBoard_no
+		and c.tag_no = #{value}
+		order by userboard_registered_date desc
+
+	</select>
+	
+
+	<resultMap type="categories" id="CategoriesTotalResultMap">
+		<id column="category_no" property="no"/>
+		<result column="category_name" property="name"/>
+		<collection property="catTags" ofType="com.sample.web.dto.TagDto" select="getTagsByCategoriesNo" column="category_no"/>
+	</resultMap>
+
+	<select id="getAllCategories" resultMap="CategoriesTotalResultMap">
+		select category_no, category_name
+		from categories
+	</select>
+
+	<select id="getTagsByCategoriesNo" parameterType="long" resultType="TagDto">
+		select a.tag_no tagNo, 
+			   a.tag_name tagName
+		from tags a
+		join categories b on a.category_no = b.category_no
+		where b.category_no = #{value}
+		order by a.tag_no asc
+	</select>
+		
+
+	<resultMap type="userBoardDto" id="UserBoardDtoDetailResultMap">
+		<id column="userboard_no" property="userBoardNo"/>
+		<result column="userboard_title" property="userBoardTitle"/>
+		<result column="userboard_content" property="userBoardContent"/>
+		<result column="userboard_git" property="userBoardGit"/>
+		<result column="userboard_warnings" property="userBoardWarnings"/>
+		<result column="userboard_access" property="userBoardAccess"/>
+		<result column="userboard_user_likes" property="userBoardUserLikes"/>
+		<result column="userboard_comp_likes" property="userBoardCompLikes"/>
+		<result column="userboard_img" property="userBoardImg"/>
+		<result column="userboard_registered_date" property="userBoardRegisteredDate"/>
+		<result column="user_no" property="userNo"/>
+		<result column="user_id" property="userId"/>
+		<collection property="tags" ofType="com.sample.web.dto.TagDto" select="getTagsByBoardNo" column="userboard_no"/>
+	</resultMap>
+
+	<select id="getTotalBoardDetail" parameterType="long" resultMap="UserBoardDtoDetailResultMap">
+		select userboard_no,
+			   userboard_title,
+			   userboard_content,
+			   userboard_git,
+			   userboard_warnings,
+			   userboard_access,
+			   userboard_user_likes,
+			   userboard_comp_likes,
+			   userboard_img,
+			   userboard_registered_date,
+			   b.user_no,
+			   user_id
+
+		from user_total_boards a 
+		join users b on a.user_no = b.user_no
+		where userboard_no = #{value}
+		and userboard_actived = 'Y'
+		order by userboard_registered_date desc
+
+	</select>
+
+
+	<insert id="insertUserBoard" parameterType="UserBoard" 
+		useGeneratedKeys="true" keyProperty="userBoardNo">
+		insert into user_total_boards
+		(user_no, userboard_title, userboard_content, userboard_git, userboard_access)
+		values
+		(#{userNo},#{userBoardTitle},#{userBoardContent},#{userBoardGit}, #{userBoardAccess})
+	</insert>
+
+	<insert id="insertUserBoardTags" parameterType="TagDto">
+		insert into user_board_tags
+		(userboard_no, tag_no)
+		values
+		(#{userBoardNo},#{tagNo})
+	</insert>
+
+
+	<update id="deletUserBoard" parameterType="long">
+		update user_total_boards
+		SET
+			userboard_actived = 'N'
+		WHERE
+			userboard_no = #{value}
+	</update>
+
+	<update id="increaseUserLikes" parameterType="long">
+		update user_total_boards
+		set 
+			userboard_user_likes = userboard_user_likes+1
+		WHERE	
+			userboard_no = #{value}
+	</update>
+	
+	<update id="decreaseUserLikes" parameterType="long">
+		update user_total_boards
+		set 
+			userboard_user_likes = userboard_user_likes-1
+		WHERE	
+			userboard_no = #{value}
+	</update>
+
+	<update id="updateUserBoard" parameterType="UserBoard">
+		UPDATE user_total_boards
+			set 
+				userboard_title= #{userBoardTitle},
+				userboard_content=#{userBoardContent},
+				userboard_git=#{userBoardGit},
+				userboard_access=#{userBoardAccess}
+			WHERE
+				userboard_no=#{userBoardNo}
+	</update>
+	<delete id="deleteUserBoardTags" parameterType="UserBoard">
+		delete from user_board_tags where userboard_no= #{userBoardNo}
+	</delete>
+
+</mapper>

@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.CommunityDao">
+
+	<!-- 커뮤니티 생성 -->
+	<insert id="insertCommunity" parameterType="Communities">
+		insert into communities
+		(commu_title, user_no, commu_intro, commu_password, commu_range, commu_img)
+		values
+		(#{title},#{userNo},#{intro},#{password},#{range},#{img})
+	</insert>
+	
+	<insert id="insertComGuest" parameterType="CommunityGuests">
+		insert into community_guests
+		(commu_no, user_no, guest_grade, guest_actived_date)
+		values
+		(#{CommunitiesNo},#{userNo},#{grade}, sysdate())
+	</insert>
+	
+	<insert id="insertComContent" parameterType="CommunityContents">
+		insert into community_contents
+		(commu_no, user_no)
+		values
+		(#{communitiesNo},#{userNo})
+	</insert>
+	
+	<insert id="insertComTag" parameterType="CommunityTags">
+		insert into community_tags
+		(tag_no, commu_no)
+		values
+		(#{tagsNo},#{communitiesNo})
+	</insert>
+	
+	<insert id="insertComWriting" parameterType="CommunityWritings">
+		insert into community_writings
+		(writing_no, writing_talk, contents_no)
+		values
+		(NEXT VALUE FOR contents_intergrated_sequence,#{talk},#{communityContentsNo})
+	</insert>
+	
+	<insert id="insertComImgs" parameterType="CommunityImgs">
+		insert into community_imgs
+		(img_no, img_name, contents_no)
+		values
+		(NEXT VALUE FOR contents_intergrated_sequence,#{name},#{communityContentsNo})
+	</insert>
+	
+	<insert id="insertComFiles" parameterType="CommunityFiles">
+		insert into community_files
+		(file_no, file_name, contents_no)
+		values
+		(NEXT VALUE FOR contents_intergrated_sequence,#{name},#{communityContentsNo})
+	</insert>
+	
+	<!-- 커뮤니티 타이틀로 해당 커뮤니티 조회 -->
+	<select id="selectCommunityByTitle" parameterType="string" resultType="Communities">
+		SELECT
+			commu_no 				AS no,
+			commu_title 			AS title,
+			commu_password 			AS password,
+			user_no 				AS userNo,
+			commu_registered_date 	AS registeredDate,
+			commu_actived 			AS actived
+		FROM
+			communities
+		WHERE
+			commu_title = #{value}
+		AND
+			commu_actived NOT IN ('Y')
+	</select>
+	
+	<!-- 커뮤니티 번호로 해당 커뮤니티 조회 -->
+	<select id="selectCommunityByNo" parameterType="long" resultType="Communities">
+		SELECT
+			commu_no 				AS no,
+			commu_title 			AS title,
+			commu_password 			AS password,
+			user_no 				AS userNo,
+			commu_registered_date 	AS registeredDate,
+			commu_actived 			AS actived,
+			commu_intro				AS intro,
+			commu_img				AS img
+		FROM
+			communities
+		WHERE
+			commu_no = #{value}
+		AND
+			commu_actived NOT IN ('Y')
+	</select>
+	
+	<!-- 커뮤니티 번호로 해당 커뮤니티의 참여자 조회 탈퇴회원 제외 -->
+	<select id="selectComGuestByNo" parameterType="long" resultType="CommunityGuestDetail">
+		SELECT
+			a.commu_no					AS CommunitiesNo,
+			a.user_no					AS userNo,
+			a.guest_grade				AS CommunitiesGrade,
+			a.guest_registered_date		AS CommunitiesRegisteredDate,
+			a.guest_actived_date		AS CommunitiesActivedDate,
+			b.user_id					AS userId,
+			b.user_name					AS userName,
+			b.user_gender				AS userGender,
+			b.user_registered_date		AS userRegisteredDate,
+			b.user_img					AS userImg	
+		FROM
+			community_guests a, users b
+		WHERE
+			a.user_no = b.user_no
+		AND
+			a.commu_no = #{value}
+		AND
+			a.guest_grade NOT IN ('탈퇴');
+	</select>
+	<!-- 커뮤니티 번호로 해당 커뮤니티의 참여자 조회  탈퇴회원포함-->
+	<select id="selectAllComGuestByNo" parameterType="long" resultType="CommunityGuestDetail">
+		SELECT
+			a.commu_no					AS CommunitiesNo,
+			a.user_no					AS userNo,
+			a.guest_grade				AS CommunitiesGrade,
+			a.guest_registered_date		AS CommunitiesRegisteredDate,
+			a.guest_actived_date		AS CommunitiesActivedDate,
+			b.user_id					AS userId,
+			b.user_name					AS userName,
+			b.user_gender				AS userGender,
+			b.user_registered_date		AS userRegisteredDate	
+		FROM
+			community_guests a, users b
+		WHERE
+			a.user_no = b.user_no
+		AND
+			a.commu_no = #{value} 
+	</select>
+	
+	<!-- 커뮤니티 번호와 유저번호로 조회 -->
+	<select id="selectComGuestByUserNoCommuNo" parameterType="long" resultType="CommunityGuests">
+		SELECT
+			commu_no					AS CommunitiesNo,
+			user_no						AS userNo,
+			guest_grade					AS grade,
+			guest_registered_date		AS registeredDate,
+			guest_actived_date			AS activedDate
+		FROM
+			community_guests
+		WHERE
+			commu_no = #{communityNo}
+		AND 
+			user_no = #{userNo}
+	</select>
+	
+	
+	<select id="selectComGuestByRegisteredDate" parameterType="long" resultType="CommunityGuests">
+		SELECT 
+			commu_no					AS CommunitiesNo,
+			user_no						AS userNo,
+			guest_grade					AS grade,
+			guest_registered_date		AS registeredDate,
+			guest_actived_date			AS activedDate,
+			RANK() OVER (ORDER BY guest_registered_date asc)
+		FROM
+			community_guests
+		WHERE 
+			commu_no = #{communityNo}
+		AND 
+			user_no NOT IN (#{userNo})
+		LIMIT 
+			1
+	</select>
+	
+	
+	<!-- 컨텐츠 번호로 해당 커뮤니티의 컨텐츠 조회 -->
+	<select id="selectComContentByContentNo" parameterType="long" resultType="CommunityContents">
+		SELECT
+			contents_no					AS no,
+			contents_registered_date 	AS registeredDate,
+			contents_updated_date		AS updatedDate,
+			contents_actived			AS actived,
+			commu_no					AS communitiesNo,
+			user_no						AS userNo
+		FROM
+			community_contents
+		WHERE
+			contents_no = #{value}
+	</select>
+	
+	<!-- 모든 커뮤니티와 각 커뮤니티의 참여자 수 조회  -->
+	<select id="selectAllCommunitiesDetail" resultType="CommunitiesDetail">
+		SELECT 
+			a.commu_no					AS commuNo,
+			a.commu_limitnum			AS commuLimitnum,
+			a.commu_img					AS commuImg,
+			a.commu_title				AS commuTitle,
+			a.commu_intro				AS commuIntro,
+			a.commu_password			AS commuPassword,
+			a.user_no					AS commuUserNo,
+			a.commu_registered_date		AS commuRigisteredDate,
+			a.commu_actived				AS commuActived,
+			a.commu_range				AS commuRange,
+			b.user_cnt					AS guestCnt
+		FROM 
+			communities a, 
+			(SELECT commu_no, count(*) as user_cnt 
+			 FROM community_guests
+			 GROUP by commu_no) b
+		WHERE 
+			a.commu_no = b.commu_no
+		AND
+			a.commu_actived NOT IN ('Y')
+	</select>
+	<!-- 커뮤니티의 태그 조회 -->
+	<select id="selectTagsByCommunityNo" parameterType="long" resultType="String">
+		SELECT 
+			b.tag_name
+		FROM 
+			community_tags a, tags b
+		WHERE 
+			a.tag_no = b.tag_no
+		AND 
+			a.commu_no = #{value}
+	</select>
+	
+	<select id="selectAllTags" resultType="CommunityTagsDto">
+		SELECT 
+			a.tag_no			AS tagNo,
+			a.tag_name			AS tagName,
+			b.category_no		AS categoryNo, 
+			b.category_name		AS categoryName
+		FROM 
+			tags a, categories b
+		WHERE 
+			a.category_no = b.category_no
+		ORDER BY 
+			b.category_no, a.tag_no;
+	</select>
+	
+	<select id="selectTagsDto" parameterType="long" resultType="CommunityTagsDto2">
+		select 
+			a.tag_no			as tagNo, 
+			a.commu_no			as communityNo, 
+			b.tag_name			as tagName
+		from 
+			community_tags a, tags b
+		where 
+			a.tag_no = b.tag_no
+		and 
+			a.commu_no = #{value}
+	</select>
+	
+	
+	<!-- 홈에서 모든 커뮤니티와 각 커뮤니티의 참여자 수 조회 리스트 -->
+	
+	<!-- community-contents 테이블 다음 시퀀스 값 조회 -->
+	<select id="comContentSchemaNo" resultType="long">	
+		SELECT 
+			AUTO_INCREMENT
+		FROM 
+			information_schema.tables
+		WHERE 
+			table_name = 'community_contents'
+		AND 
+			table_schema = DATABASE( )
+	</select>
+	
+	<!-- 유저번호를 받아서 유저가 현재 참여중인 커뮤니티방에서 해당 유저가 확인하지 않은 컨텐츠의 개수를 조회 -->
+	<select id="selectNewContentCntByUserNo" parameterType="long" resultType="CommunityCntDto">	
+		select a.commu_no as communityNo, 
+			   count(b.commu_no) as contentCnt, 
+			   c.commu_title as communityTitle
+		from 
+			community_guests as a
+			left join 
+				community_contents as b
+			on 
+				a.commu_no = b.commu_no
+			and 
+				b.contents_registered_date > a.guest_actived_date
+			join 
+				communities as c
+			on 
+				a.commu_no = c.commu_no
+		where 
+			a.user_no = #{value}
+		and 
+			a.guest_grade not in ('탈퇴')
+		group by 
+			a.commu_no
+	</select>
+	 
+	<!-- 유저번호를 받아서 유저가 현재 참여중인 커뮤니티방에서 해당 유저가 확인하지 않은 컨텐츠의 개수를 조회 -->
+	<select id="selectNewContentCntByUserNoAndCommuNo" parameterType="long" resultType="CommunityCntDto">	
+		select a.commu_no as communityNo, 
+			   count(b.commu_no) as contentCnt, 
+			   c.commu_title as communityTitle
+		from 
+			community_guests as a
+			left join 
+				community_contents as b
+			on 
+				a.commu_no = b.commu_no
+			and 
+				b.contents_registered_date > a.guest_actived_date
+			join 
+				communities as c
+			on 
+				a.commu_no = c.commu_no
+		where 
+			a.user_no = #{userNo}
+		and 
+			a.guest_grade not in ('탈퇴')
+		and
+			a.commu_no = #{communityNo}
+		group by 
+			a.commu_no
+	</select>
+	
+	<!-- 컨텐츠번호로 컨텐츠정보와 내용을 조회 -->
+	<resultMap type="com.sample.web.dto.CommunityContentDetail" id="communityContentsDetail">
+		<result property="no" column="contents_no" />
+		<result property="registeredDate" column="contents_registered_date" />
+		<result property="updatedDate" column="contents_updated_date" />
+		<result property="actived" column="contents_actived" />
+		<result property="communitiesNo" column="commu_no" />
+		<result property="userNo" column="user_no" />
+		<result property="userName" column="user_name" />
+		<result property="userImg" column="user_img" />
+		
+		
+		<association property="communityWritings" javaType="CommunityWritings">
+			<result property="no" column="writing_no" />
+			<result property="talk" column="writing_talk" />
+		</association>
+		<association property="communityImgs" javaType="CommunityImgs">
+			<result property="no" column="img_no"/>
+			<result property="name" column="img_name"/>
+		</association>
+		<association property="communityFiles" javaType="CommunityFiles">
+			<result property="no" column="file_no"/>
+			<result property="name" column="file_name"/>
+		</association>
+	</resultMap>
+	<select id="selectComContentsDetailByNo" parameterType="long" resultMap="communityContentsDetail">
+		select 
+			a.contents_no, a.commu_no, a.contents_registered_date, 
+			a.contents_updated_date, a.contents_actived, a.user_no, 
+			writing_no, writing_talk, 
+			file_no, file_name, 
+			img_no, img_name,
+			e.user_name, e.user_img
+		from 
+			community_contents a 
+		left outer join 
+			community_writings b on a.contents_no = b.contents_no
+		left outer join 
+			community_files c on a.contents_no = c.contents_no
+		left outer join 
+			community_imgs d on a.contents_no = d.contents_no
+		JOIN
+		     users e
+		where 
+			a.commu_no = #{value}
+		and 
+		    a.user_no = e.user_no
+		order by
+			a.contents_no asc
+	</select>
+	
+	<resultMap type="com.sample.web.dto.CommunityContentDetail" id="communityContentDetail">
+		<result property="no" column="contents_no" />
+		<result property="registeredDate" column="contents_registered_date" />
+		<result property="updatedDate" column="contents_updated_date" />
+		<result property="actived" column="contents_actived" />
+		<result property="communitiesNo" column="commu_no" />
+		<result property="userNo" column="user_no" />
+		<result property="userName" column="user_name" />
+		<result property="userImg" column="user_img" />
+		
+		<association property="communityWritings" javaType="CommunityWritings">
+			<result property="no" column="writing_no" />
+			<result property="talk" column="writing_talk" />
+		</association>
+		<association property="communityImgs" javaType="CommunityImgs">
+			<result property="no" column="img_no"/>
+			<result property="name" column="img_name"/>
+		</association>
+		<association property="communityFiles" javaType="CommunityFiles">
+			<result property="no" column="file_no"/>
+			<result property="name" column="file_name"/>
+		</association>
+	</resultMap>
+	<select id="selectComcontentDetailByNo" parameterType="long" resultMap="communityContentDetail">
+		select 
+			a.contents_no, a.commu_no, a.contents_registered_date, 
+			a.contents_updated_date, a.contents_actived, a.user_no, 
+			writing_no, writing_talk, 
+			file_no, file_name, 
+			img_no, img_name,
+			e.user_name, e.user_img
+		from 
+			community_contents a 
+		left outer join 
+			community_writings b on a.contents_no = b.contents_no
+		left outer join 
+			community_files c on a.contents_no = c.contents_no
+		left outer join 
+			community_imgs d on a.contents_no = d.contents_no
+		JOIN
+		     users e
+		where 
+			a.commu_no = #{communityNo}
+		and 
+		    a.user_no = e.user_no
+		and 
+			a.contents_no = #{contentNo}
+		order by
+			a.contents_no asc
+	</select>
+	
+	<select id="selectComImageByNo" parameterType="long" resultType="CommunityFileDto">
+		select 
+			c.user_name						as userName,
+			a.img_name						as contentName,
+			b.contents_registered_date		as contentRegisteredDate
+		from 
+			community_imgs as a
+		left join 
+			community_contents as b
+		on 
+			a.contents_no = b.contents_no
+		join 
+			users as c
+		on 
+			b.user_no = c.user_no
+		where 
+			b.commu_no = #{value}
+		order by 
+			b.contents_registered_date desc
+	</select>
+	
+	<select id="selectComFileByNo" parameterType="long" resultType="CommunityFileDto">
+		select 
+			c.user_name						as userName,
+			a.file_name						as contentName,
+			b.contents_registered_date		as contentRegisteredDate
+		from 
+			community_files as a
+		left join 
+			community_contents as b
+		on 
+			a.contents_no = b.contents_no
+		join 
+			users as c
+		on 
+			b.user_no = c.user_no
+		where 
+			b.commu_no = #{value}
+		order by 
+			b.contents_registered_date desc
+	</select> 
+	
+	<select id="selectComTextByNo" parameterType="long" resultType="CommunityFileDto">
+		select 
+			c.user_name						as userName,
+			a.writing_talk					as contentName,
+			b.contents_registered_date		as contentRegisteredDate
+		from 
+			community_writings as a
+		left join 
+			community_contents as b
+		on 
+			a.contents_no = b.contents_no
+		join 
+			users as c
+		on 
+			b.user_no = c.user_no
+		where 
+			b.commu_no = #{value}
+		order by 
+			b.contents_registered_date desc
+	</select>
+	
+	<select id="selectComTags" parameterType="long" resultType="CommunityTags">
+		select 
+			commtag_no		as no,
+			tag_no			as tagsNo,
+			commu_no		as communitiesNo
+		from 
+			community_tags 
+		where 
+			commu_no = #{value}
+	</select>
+	
+	<delete id="deleteComTags" parameterType="long">
+		delete from 
+			community_tags 
+		where 
+			commtag_no = #{value}
+	</delete>
+	
+	<update id="updateCommunity" parameterType="Communities">
+		UPDATE 
+			communities
+		SET
+			commu_title = #{title},
+			commu_intro = #{intro},
+			commu_password = #{password},
+			commu_actived = #{actived}
+		WHERE
+			commu_no = #{no}
+	</update>
+	
+	<update id="updateCommunityImage" parameterType="CommunityImgDto">
+		UPDATE 
+			communities
+		SET
+			commu_img = #{commuImg}
+		WHERE
+			commu_no = #{commuNo}
+	</update>
+	
+	<update id="updateComGuest" parameterType="CommunityGuests">
+		UPDATE 
+			community_guests
+		SET
+			guest_grade = #{grade},
+			guest_actived_date = sysdate()
+		WHERE
+			commu_no = #{CommunitiesNo}
+		AND 
+			user_no = #{userNo}
+	</update>
+</mapper>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.UserDao">
+
+	<select id="selectUserByNo" parameterType="long" resultType="Users">
+		SELECT
+			user_no					AS no,
+			user_id					AS id,
+			login_way				AS loginWay,
+			user_name				AS name,
+			user_img				AS img,
+			user_gender				AS gender,
+			user_birth				AS birth,
+			user_git_addr			AS gitAddr,
+			user_email				AS email,
+			user_deleted			AS deleted,
+			user_actived			AS actived,
+			user_gratuation			AS graduation,
+			user_registered_date	AS registeredDate
+		FROM 
+			users
+		WHERE
+			user_no = #{value}
+	</select>
+
+	<select id="selectUserById" parameterType="string" resultType="Users">
+		SELECT
+			user_no					AS no,
+			user_id					AS id,
+			login_way				AS loginWay,
+			user_name				AS name,
+			user_img				AS img,
+			user_gender				AS gender,
+			user_birth				AS birth,
+			user_git_addr			AS gitAddr,
+			user_email				AS email,
+			user_deleted			AS deleted,
+			user_actived			AS actived,
+			user_gratuation			AS graduation,
+			user_registered_date	AS registeredDate
+		FROM 
+			users
+		WHERE
+			user_id = #{value}
+	</select>
+
+
+
+
+	<insert id="insertUserApi" parameterType="Users">
+		INSERT INTO users
+			(user_id, login_way, user_name, user_gender, user_email)
+		VALUES 
+			(#{id}, #{loginWay}, #{name}, #{gender}, #{email})
+	</insert>
+
+<!-- 
+	<insert id="insertUser" parameterType="Users">
+		INSERT INTO users 
+			(user_id, login_way, user_name, user_gender)
+		VALUES
+			(#{id}, #{loginWay}, #{name}, #{gender})
+	</insert>
+ -->	
+	<insert id="insertUser" parameterType="UsersForm">
+		INSERT INTO users 
+			(user_id, login_way, user_name, user_gender)
+		VALUES
+			(#{userId}, #{loginWayPwd}, #{userName}, #{userGender})
+	</insert>
+
+	<update id="updateUser" parameterType="Users">
+		UPDATE
+			users
+		SET 
+			user_name = #{name}, 
+			user_img = #{img}, 
+			user_gender = #{gender}, 
+			user_birth = #{birth}, 
+			user_git_addr = #{gitAddr}, 
+			user_email = #{email}
+		WHERE
+			user_no = #{no}
+	</update>
+
+	<update id="deleteUser" parameterType="long">
+		update users
+		set user_deleted = 'Y'
+		where user_no =#{value}
+	</update>
+</mapper>

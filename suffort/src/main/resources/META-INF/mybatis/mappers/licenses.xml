@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sample.dao.LicenseDao">
+
+	<select id="getLicensesByUserNo" parameterType="long" resultType="Licenses">
+		SELECT
+			license_no				AS no,
+			license_name 			AS name,
+			license_grade			AS grade,
+			license_company			AS company,
+			license_registered_date AS registeredDate,
+			user_no					AS userNo
+		FROM
+			licenses
+		WHERE
+			user_no = #{value}
+		ORDER BY
+			license_no DESC
+			
+	</select>
+
+	<insert id="insertLicense" parameterType="Licenses">
+		INSERT INTO licenses
+			(license_name, license_grade, license_company, license_registered_date, user_no)
+		VALUES
+			(#{name}, #{grade}, #{company}, #{registeredDate}, #{userNo});
+	</insert>
+	
+	<delete id="deleteLicense" parameterType="long">
+		DELETE
+		FROM
+			licenses
+		WHERE
+			license_no = #{value}
+	</delete>
+	
+</mapper>
